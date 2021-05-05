@@ -9,25 +9,7 @@
 import Foundation
 import Alamofire
 
-class RecipesService {
-        
-    func myRecipes(ingredients: String, completionHandler: @escaping ([Recipe]?, Bool) -> Void) {
-        let parameters: Parameters = ["q": ingredients, "app_id": "30e6a123", "app_key": "670c84e334255a323628ebfd7aaf243f", "to": 25]
-        AF.request("https://api.edamam.com/search", method: .get, parameters: parameters).responseJSON { (response) in
-                DispatchQueue.main.async {
-                    if let data = response.data {
-                    guard  let responseJson =  try? JSONDecoder().decode(Response.self, from: data) else {
-                        completionHandler(nil, false)
-                        return
-                    }
-                        let allRecipes = self.getRecipes(responseJson: responseJson)
-                        completionHandler(allRecipes, true)
-                    } else {
-                        completionHandler(nil, false)
-                }
-            }
-        }
-    }
+class RecipesService { // protocol qui immplmente les méthodes
 
     private func getRecipes(responseJson: Response) -> [Recipe] {
         var i = 0
@@ -40,17 +22,7 @@ class RecipesService {
         }
         return allRecipes
     }
-    
-    func imageFrom(url: URL, completionHandler: @escaping (UIImage?, Error?) -> Void) {
-        AF.request(url).responseData { response in
-            guard let data = response.data else {
-                completionHandler(nil, response.error)
-                return
-            }
-            let image = UIImage(data: data)
-            completionHandler(image, nil)
-        }
-    }
+
 }
 
 extension RecipesService {
@@ -85,6 +57,38 @@ extension RecipesService {
     }
 }
 
+extension RecipesService: RecipeServiceProtocol {
+    
+    func mySearchRecipes(ingredients: String, completionHandler: @escaping ([Recipe]?, Bool) -> Void) {
+        let parameters: Parameters = ["q": ingredients, "app_id": "30e6a123", "app_key": "670c84e334255a323628ebfd7aaf243f", "to": 25]
+        AF.request("https://api.edamam.com/search", method: .get, parameters: parameters).responseJSON { (response) in
+                DispatchQueue.main.async {
+
+                    if let data = response.data {
+                    guard  let responseJson =  try? JSONDecoder().decode(Response.self, from: data) else {
+                        completionHandler(nil, false)
+                        return
+                    }
+                        let allRecipes = self.getRecipes(responseJson: responseJson)
+                        completionHandler(allRecipes, true)
+                    } else {
+                        completionHandler(nil, false)
+                }
+            }
+        }
+    }
+    
+    func imageFrom(url: URL, completionHandler: @escaping (Data?, Error?) -> Void) {
+        AF.request(url).responseData { response in
+            guard let data = response.data else {
+                completionHandler(nil, response.error)
+                return
+            }
+            completionHandler(data, nil)
+        }
+    }
+}
+
 struct Recipe {
     var label: String
     var totalTime: Float
@@ -94,7 +98,6 @@ struct Recipe {
     var correctTime: String
     var myImage = UIImage()
 }
-
 
 struct Response: Codable {
     

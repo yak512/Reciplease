@@ -11,39 +11,31 @@ import Alamofire
 
 class SearchRecipViewController: UIViewController {
 
+    // MARK: - Outlets
     @IBOutlet weak var IngredientsTextField: UITextField!
     @IBOutlet weak var IngredientsTextView: UITextView!
-    
     @IBOutlet weak var SearchButton: UIButton!
     @IBOutlet weak var addButton: UIButton!
     @IBOutlet weak var clearButton: UIButton!
     @IBOutlet weak var ActivityIndicator: UIActivityIndicatorView!
 
+    // MARK: - Properties
     var searchRecipes = RecipesService()
     var allRecipes: [Recipe]!
     var ingredients: String!
     var imageCache: [URL: UIImage?] = [:]
 
     
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         roundButtons()
         super.viewDidLoad()
 
     }
 
-    private func roundButtons() {
-        SearchButton.layer.cornerRadius = 15
-        addButton.layer.cornerRadius = 10
-        clearButton.layer.cornerRadius = 10
-    }
-    
+    // MARK: - Actions
     @IBAction func dismissKeyboard(_ sender: Any) {
         IngredientsTextField.resignFirstResponder()
-    }
-
-    func displayButtonAndActivityIndicator(isHiden: Bool) {
-        SearchButton.isHidden = isHiden
-        ActivityIndicator.isHidden = !isHiden
     }
     
     @IBAction func searchForRecipes(_ sender: Any) {
@@ -51,7 +43,7 @@ class SearchRecipViewController: UIViewController {
             presentAlert(title: "Error", message: "No ingredients in the list")
         } else {
             displayButtonAndActivityIndicator(isHiden: true)
-            searchRecipes.myRecipes(ingredients: ingredients) { (recipes, response) in
+            searchRecipes.mySearchRecipes(ingredients: ingredients) { (recipes, response) in
                 if recipes?.count == 0 && response == true {
                     self.presentAlert(title: "Info", message: "No Recipes found, please try other ingredients")
                     self.displayButtonAndActivityIndicator(isHiden: false)
@@ -67,14 +59,6 @@ class SearchRecipViewController: UIViewController {
         }
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "segueToRecipes" {
-            let recipesVC = segue.destination as! RecipesListViewController
-            recipesVC.allRecipes = allRecipes!
-            recipesVC.imageCache = imageCache
-        }
-    }
-
     @IBAction func addIngredient(_ sender: Any) {
         if IngredientsTextField.text != "" {
             IngredientsTextView.text! += "  - " + IngredientsTextField.text! + "\n\n"
@@ -85,6 +69,31 @@ class SearchRecipViewController: UIViewController {
 
     @IBAction func clearIngredients(_ sender: Any) {
         IngredientsTextView.text = ""
+    }
+    
+    
+    // MARK: - Helpers
+    private func roundButtons() {
+        SearchButton.layer.cornerRadius = 15
+        addButton.layer.cornerRadius = 10
+        clearButton.layer.cornerRadius = 10
+    }
+    
+    
+
+    func displayButtonAndActivityIndicator(isHiden: Bool) {
+        SearchButton.isHidden = isHiden
+        ActivityIndicator.isHidden = !isHiden
+    }
+    
+    
+
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "segueToRecipes" {
+            let recipesVC = segue.destination as! RecipesListViewController
+            recipesVC.allRecipes = allRecipes!
+            recipesVC.imageCache = imageCache
+        }
     }
 
     private func presentAlert(title: String, message: String) {

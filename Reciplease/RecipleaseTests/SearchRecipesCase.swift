@@ -7,57 +7,62 @@
 //
 
 import XCTest
+import Foundation
 @testable import Reciplease
+@testable import Alamofire
 
 class SearchRecipesCase: XCTestCase {
 
-    let ingredient = "chicken,tomato"
-    let service = RecipesService()
-    
-   func testGettingJSON() {
-      let ex = expectation(description: "Expecting a JSON data not nil")
-
-    service.myRecipes(ingredients: ingredient) { (recipes, response ) in
-        XCTAssertTrue(response && recipes != nil)
-        ex.fulfill()
-    }
-      waitForExpectations(timeout: 10) { (error) in
-        if let error = error {
-          XCTFail("error: \(error)")
+    private var recipeService =  MokeRecipeService()
+    override func setUp() {
+            super.setUp()
         }
-      }
-    }
-    
-    func testGetImage() {
+
+
+    func testRecipeSearch() {
         
-        let url  = URLComponents(string: "https://www.edamam.com/web-img/e42/e42f9119813e890af34c259785ae1cfb.jpg")
-        let ex = expectation(description: "Expecting a JSON data not nil")
+        recipeService.shouldReturnError = false
+        let expectation = XCTestExpectation(description: "Performs a request")
+        recipeService.mySearchRecipes(ingredients: "chicken, potato") { (recipes, response) in
+            XCTAssertNotNil(recipes)
+            expectation.fulfill()
 
-        service.imageFrom(url: url!.url!) { (image, error) in
-            XCTAssertNotNil(image)
-            ex.fulfill()
         }
-        waitForExpectations(timeout: 10) { (error) in
-          if let error = error {
-            XCTFail("error: \(error)")
-          }
-        }
+        wait(for: [expectation], timeout: 0.01)
     }
     
-   func testGetImageError() {
-        
-        let url  = URLComponents(string: "")
-        let ex = expectation(description: "no image")
+    func testRecipeSearchNotOk() {
+        recipeService.shouldReturnError = true
 
-        service.imageFrom(url: url!.url!) { (image, error) in
-            XCTAssertNil(image)
-            ex.fulfill()
+        let expectation = XCTestExpectation(description: "Performs a request")
+        recipeService.mySearchRecipes(ingredients: "c") { (recipes, response) in
+            XCTAssertNil(recipes)
+            expectation.fulfill()
+
         }
-        waitForExpectations(timeout: 10) { (error) in
-          if let error = error {
-            XCTFail("error: \(error)")
-          }
-        }
+        wait(for: [expectation], timeout: 0.01)
     }
+    
+    func testImageRequestOk() {
+        recipeService.shouldReturnError = false
 
+        let expectation = XCTestExpectation(description: "Performs a request")
+
+        recipeService.imageFrom(url: URL(string: "https:")!) { (data, error) in
+            XCTAssertNotNil(data)
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 0.01)
+    }
+    
+    func testImageRequestNotOk() {
+        recipeService.shouldReturnError = true
+        let expectation = XCTestExpectation(description: "Performs a request")
+
+        recipeService.imageFrom(url: URL(string: "https://d")!) { (data, error) in
+            XCTAssertNil(data)
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 0.01)
+    }
 }

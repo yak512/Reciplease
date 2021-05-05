@@ -10,24 +10,27 @@ import UIKit
 
 class RecipesListViewController: UIViewController {
 
+    // MARK: - Properties
     var allRecipes: [Recipe]!
     var recipService = RecipesService()
     var imageCache: [URL: UIImage?] = [:]
 
+    // MARK: - Outlet
     @IBOutlet weak var tableView: UITableView!
-    
+
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
-        
         super.viewWillAppear(animated)
         tableView.reloadData()
     }
 
 }
-
+    
+    // MARK: - UITableViewDelegate
 extension RecipesListViewController: UITableViewDataSource, UITableViewDelegate {
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -51,13 +54,14 @@ extension RecipesListViewController: UITableViewDataSource, UITableViewDelegate 
             cell.configure(image: recipe.myImage, recipeTitle: recipe.label, ingredients: recipe.ingredientLines[0], time: recipe.correctTime)
             cell.setNeedsLayout()
         } else {
-                recipService.imageFrom(url: recipe.imageUrl) { (image, error) in
+                recipService.imageFrom(url: recipe.imageUrl) { (data, error) in
                 guard error == nil else {
                     return
                 }
-                self.imageCache[recipe.imageUrl] = image
+                let myImage = UIImage(data: data!)
+                self.imageCache[recipe.imageUrl] = myImage
                 cell.imageView?.image = nil
-                cell.configure(image: image!, recipeTitle: recipe.label, ingredients: recipe.ingredientLines[0], time: recipe.correctTime)
+                cell.configure(image: myImage!, recipeTitle: recipe.label, ingredients: recipe.ingredientLines[0], time: recipe.correctTime)
                 cell.setNeedsLayout()
                 }
         }
@@ -68,6 +72,7 @@ extension RecipesListViewController: UITableViewDataSource, UITableViewDelegate 
         performSegue(withIdentifier: "segueToDetail", sender: self)
     }
 }
+
 
 extension RecipesListViewController {
     

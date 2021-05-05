@@ -12,13 +12,17 @@ import CoreData
 
 class DetailViewController: UIViewController {
 
+    // MARK: - Properties
+    
     var myRecipe: Recipe!
     var imageCache: [URL: UIImage?] = [:]
     var favoritRecipes = [FavoritRecipe]()
     var allFavoritRecipes = [FavoritRecipe]()
     var isFav: Bool = false
     var isAlreadyFav: Bool = false
+    var dataService = DataService()
 
+    // MARK: - Outlets
     @IBOutlet weak var recipeLabel: UILabel!
     @IBOutlet weak var recipeImage: UIImageView!
     @IBOutlet weak var timeLabel: UILabel!
@@ -26,29 +30,35 @@ class DetailViewController: UIViewController {
     @IBOutlet weak var ingredientsLabel: UITextView!
     @IBOutlet weak var getDirectionsButton: UIButton!
     @IBOutlet weak var favoritButton: UIBarButtonItem!
-    
+
+    // MARK: - LifeCycle
     override func viewDidLoad() {
         addGraphic()
         detail()
         super.viewDidLoad()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
-           let fetchRequest: NSFetchRequest<FavoritRecipe> = FavoritRecipe.fetchRequest()
-           do {
-               let allFavoriteRecipes =  try PersistenceService.context.fetch(fetchRequest)
-               self.allFavoritRecipes = allFavoriteRecipes
-           } catch {
-               return
-           }
+        let favoritRecipes = dataService.loadFavoriteRecipes()
+        allFavoritRecipes = favoritRecipes
         alreadyFav()
     }
 
+    // MARK: - Actions
     @IBAction func getDirections(_ sender: Any) {
         let vc = SFSafariViewController(url: myRecipe.url)
         present(vc, animated: true, completion: nil)
     }
 
+    @IBAction func favoritRecipe(_ sender: Any) {
+        if isFav != true && isAlreadyFav != true {
+            saveRecipe()
+        } else {
+            alertAlreadyFav()
+        }
+    }
+
+    // MARK: - Helpers
     private func detail() {
         timeLabel.text = myRecipe.correctTime
         if let cachedImage = imageCache[myRecipe.imageUrl] {
@@ -81,27 +91,9 @@ extension DetailViewController {
     private func saveRecipe() {
         isAlreadyFav = true
         favoritButton.tintColor = UIColor .yellow
-        let saveFavRecipe = FavoritRecipe(context: PersistenceService.context)
-        saveFavRecipe.correctTime = myRecipe.correctTime
-        saveFavRecipe.labelRecipe = myRecipe.label
-        saveFavRecipe.ingredientsLines = myRecipe.ingredientLines as [NSString]
-        let data = (myRecipe?.myImage)!.pngData()
-        saveFavRecipe.imageRecipe = data
-        saveFavRecipe.urlRecipe = myRecipe.url
-        saveFavRecipe.isFav = true
-        PersistenceService.saveContext()
-        favoritRecipes.append(saveFavRecipe)
+        dataService.saveRecipe(myRecipe: myRecipe)
         let fVc = FavoriteListViewController(nibName: "FavoriteListViewController", bundle: nil)
-        fVc.favoritRecipes = favoritRecipes
-    }
-    
-    
-    @IBAction func favoritRecipe(_ sender: Any) {
-        if isFav != true && isAlreadyFav != true {
-            saveRecipe()
-        } else {
-            alertAlreadyFav()
-        }
+        fVc.favoritRecipes = dataService.favoritRecipes
     }
     
     private func alertAlreadyFav() {

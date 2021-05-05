@@ -12,9 +12,12 @@ import SafariServices
 
 class FavoritDetailViewController: UIViewController {
 
+    // MARK: - properties
     var favoriteRecipes: FavoritRecipe!
+    var dataService = DataService()
     var unFav = false
     
+    // MARK: - Outlets
     @IBOutlet weak var time: UILabel!
     @IBOutlet weak var imageRecipe: UIImageView!
     @IBOutlet weak var ingredientsTextView: UITextView!
@@ -24,25 +27,19 @@ class FavoritDetailViewController: UIViewController {
     @IBOutlet weak var detailView: UIView!
     
 
+    // MARK: - Lifecycle
     override func viewDidLoad() {
+        super.viewDidLoad()
         addGraphic()
         recipeDetail()
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
-    }
-    
-    private func alertAlreadyRemovedFromFav() {
-        let alertVc = UIAlertController(title: "Info", message: "This recipe has already been removed from your favorites list", preferredStyle: .alert)
-        alertVc.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-        present(alertVc, animated: true, completion: nil)
     }
 
+    // MARK: - Actions
     @IBAction func unFavorite(_ sender: Any) {
         if unFav == false {
             unFav = true
             favoriteButton.tintColor = UIColor.white
-            PersistenceService.context.delete(favoriteRecipes)
-            PersistenceService.saveContext()
+            dataService.deleteRecipe(favoriteRecipes: favoriteRecipes)
         } else {
             alertAlreadyRemovedFromFav()
         }
@@ -52,7 +49,14 @@ class FavoritDetailViewController: UIViewController {
         let vc = SFSafariViewController(url: favoriteRecipes.urlRecipe!)
         present(vc, animated: true, completion: nil)
     }
-
+    
+    // MARK: - Helpers
+    private func alertAlreadyRemovedFromFav() {
+        let alertVc = UIAlertController(title: "Info", message: "This recipe has already been removed from your favorites list", preferredStyle: .alert)
+        alertVc.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+        present(alertVc, animated: true, completion: nil)
+    }
+    
     private func recipeDetail() {
         favoriteButton.tintColor = UIColor.yellow
         time.text = favoriteRecipes.correctTime
